@@ -1265,7 +1265,7 @@ void pcmpxstrx_impl(ThreadState* state, pcmpxstrx type, Int* dst, Int* src, u8 c
             dst_length = Count;
         }
 
-        if (std::abs(dst_length) > Count) {
+        if (std::abs(src_length) > Count) {
             src_length = Count;
         }
     }
@@ -1355,17 +1355,11 @@ void pcmpxstrx_impl(ThreadState* state, pcmpxstrx type, Int* dst, Int* src, u8 c
         break;
     }
     case EqualOrdered: {
-        intres1 = 0;
-        for (int j = 0; j < src_length; j++) {
-            bool match = true;
-            for (int i = 0; i < dst_length && (j + i) < src_length; i++) {
-                if (!overrideIfInvalid(i, j + i)) {
-                    match = false;
-                    break;
-                }
-            }
-            if (match) {
-                intres1 |= (1 << j);
+        intres1 = Mask;
+        for (int j = 0; j <= UpperBound; j++) {
+            for (int i = 0, k = j; i <= UpperBound - j && k <= UpperBound; i++, k++) {
+                u32 bit = !overrideIfInvalid(i, k);
+                intres1 &= ~(bit << j);
             }
         }
         break;
@@ -1638,12 +1632,12 @@ std::string felix86_maps() {
 }
 
 const std::string& felix86_cpuinfo() {
-#define ADD_FLAG(cond, name)                                                                                                                                   \
-    do {                                                                                                                                                       \
-        if (cond) {                                                                                                                                            \
-            flags += name;                                                                                                                                     \
-            flags += " ";                                                                                                                                      \
-        }                                                                                                                                                      \
+#define ADD_FLAG(cond, name)                                                                                                                         \
+    do {                                                                                                                                             \
+        if (cond) {                                                                                                                                  \
+            flags += name;                                                                                                                           \
+            flags += " ";                                                                                                                            \
+        }                                                                                                                                            \
     } while (0)
 
     static std::string cpuinfo = []() {
